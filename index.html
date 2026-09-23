@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NBA on NBC Audio Tools</title>
+
+    <style>
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #0f0d13;
+            color: #ffffeb;
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            width: min(900px, 90%);
+        }
+
+        h1 {
+            color: #ffffeb;
+            margin-bottom: 6px;
+        }
+
+        .subtitle {
+            color: #897a93;
+            margin-bottom: 30px;
+        }
+
+        .tools {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 18px;
+        }
+
+        .tool {
+            display: block;
+            padding: 28px;
+            border-radius: 14px;
+            text-decoration: none;
+            color: #ffffeb;
+            background: #17131d;
+            border: 1px solid #3f2a51;
+            transition: 0.15s ease;
+        }
+
+        .tool:hover {
+            transform: translateY(-2px);
+            border-color: #86588e;
+            background: #1d1824;
+        }
+
+        .tool h2 {
+            margin: 0 0 8px;
+        }
+
+        .tool p {
+            color: #c7ddca;
+            margin: 0;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>NBA on NBC</h1>
+    <div class="subtitle">Audio Engineering Tools</div>
+
+    <div class="tools">
+
+        <a class="tool" href="route-tracer.html">
+            <h2>Calrec Route Tracer</h2>
+            <p>Routing, Bus Contribution & Source Routing</p>
+        </a>
+
+        <a class="tool" href="bus-main-mapping.html">
+            <h2>Bus & Main Mapping</h2>
+            <p>Interactive NBA bus and main routing map</p>
+        </a>
+
+    </div>
+
+</div>
+
+</body>
+</html>
