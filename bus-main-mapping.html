@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>NBA on NBC BUS AND MAIN MAPPING</title>
+<style>
+  :root{
+    --bg:#0f0d13;
+    --panel:#17131d;
+    --panel2:#1d1824;
+    --stroke:#3f2a51;
+    --purple:#86588e;
+    --mauve:#897a93;
+    --mint:#c7ddca;
+    --sage:#829e96;
+    --cream:#ffffeb;
+    --text:#f7f2fa;
+    --muted:#b8adbF;
+    --group:#cfdcf0;
+    --bird:#f0c6df;
+    --danger:#ed2c35;
+    --shadow:0 18px 50px rgba(0,0,0,.30);
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    background:
+      radial-gradient(circle at 15% 12%, rgba(134,88,142,.18), transparent 28%),
+      radial-gradient(circle at 82% 20%, rgba(130,158,150,.10), transparent 26%),
+      var(--bg);
+    color:var(--text);
+    font-family:"Lato","Avenir Next","Segoe UI",Arial,sans-serif;
+    overflow:hidden;
+  }
+  button,input{font:inherit}
+  .app{height:100%;display:grid;grid-template-rows:auto 1fr;gap:12px;padding:14px}
+  .glass{
+    background:linear-gradient(180deg,rgba(34,28,42,.92),rgba(22,18,28,.92));
+    border:1px solid rgba(255,255,255,.08);
+    box-shadow:var(--shadow);
+    backdrop-filter:blur(18px);
+    -webkit-backdrop-filter:blur(18px);
+  }
+  header{
+    min-height:76px;border-radius:18px;display:flex;align-items:center;gap:20px;padding:14px 18px;
+  }
+  .brand{min-width:280px}
+  .brand h1{
+    margin:0;font-family:"Rock Sans","Avenir Next",Arial,sans-serif;font-size:20px;letter-spacing:.04em;font-weight:800;
+  }
+  .brand .sub{margin-top:4px;color:var(--muted);font-size:12px;letter-spacing:.04em}
+  .controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex:1}
+  .control-group{display:flex;align-items:center;gap:6px;padding:5px;border-radius:12px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.05)}
+  .btn{
+    border:0;background:transparent;color:var(--muted);padding:8px 11px;border-radius:9px;cursor:pointer;transition:.18s ease;
+  }
+  .btn:hover{background:rgba(255,255,255,.07);color:#fff}
+  .btn.active{background:rgba(134,88,142,.28);color:#fff;box-shadow:inset 0 0 0 1px rgba(199,221,202,.16)}
+  .btn.primary{background:var(--purple);color:white}
+  .btn.primary:hover{filter:brightness(1.08)}
+  .search{
+    margin-left:auto;min-width:180px;max-width:260px;flex:1;height:38px;border-radius:11px;border:1px solid rgba(255,255,255,.08);
+    background:rgba(255,255,255,.04);color:#fff;padding:0 12px;outline:none;
+  }
+  .search:focus{border-color:rgba(199,221,202,.45);box-shadow:0 0 0 3px rgba(199,221,202,.08)}
+  .main{min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:12px}
+  .stage{min-width:0;min-height:0;border-radius:18px;overflow:hidden;position:relative}
+  .stage-toolbar{position:absolute;z-index:5;left:14px;top:14px;display:flex;gap:7px}
+  .chip{
+    border:1px solid rgba(255,255,255,.09);background:rgba(17,14,21,.78);color:var(--muted);padding:7px 10px;border-radius:999px;font-size:11px;cursor:pointer;
+  }
+  .chip.on{color:#fff;border-color:rgba(199,221,202,.28);background:rgba(63,42,81,.82)}
+  #diagramView,#matrixView{position:absolute;inset:0}
+  #diagramView{display:block}
+  #matrixView{display:none;overflow:auto;padding:82px 22px 24px}
+  svg{width:100%;height:100%;display:block}
+  .inspector{border-radius:18px;padding:16px;overflow:auto;min-height:0}
+  .inspector h2{font-family:"Rock Sans","Avenir Next",Arial,sans-serif;font-size:14px;letter-spacing:.05em;margin:0 0 6px}
+  .hint{color:var(--muted);font-size:12px;line-height:1.5;margin-bottom:14px}
+  .stat-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0 16px}
+  .stat{background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:11px}
+  .stat .n{font-family:Arial,sans-serif;font-size:22px;font-weight:800}
+  .stat .l{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-top:3px}
+  .section-title{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;margin:16px 0 8px}
+  .selection-list,.route-list{display:flex;flex-direction:column;gap:6px}
+  .pill{
+    display:flex;align-items:center;justify-content:space-between;gap:8px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);padding:9px 10px;border-radius:10px;font-size:12px;
+  }
+  .pill button{border:0;background:transparent;color:var(--muted);cursor:pointer;font-size:16px;line-height:1}
+  .route-item{
+    display:grid;grid-template-columns:9px 1fr;gap:9px;align-items:start;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.055);font-size:11px;line-height:1.35;color:#ddd3e2;
+  }
+  .route-dot{width:8px;height:8px;border-radius:99px;margin-top:3px;background:var(--mauve);box-shadow:0 0 12px currentColor}
+  .empty{color:var(--muted);font-size:12px;line-height:1.5;padding:10px;border:1px dashed rgba(255,255,255,.08);border-radius:10px}
+  .legend{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px}
+  .legend span{display:inline-flex;align-items:center;gap:6px;color:var(--muted);font-size:10px}
+  .sw{width:8px;height:8px;border-radius:50%}
+  .matrix-wrap{min-width:1050px;background:rgba(10,8,13,.42);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:14px}
+  .matrix-title{font-family:"Rock Sans","Avenir Next",Arial,sans-serif;font-weight:800;font-size:15px;margin-bottom:12px}
+  table{border-collapse:separate;border-spacing:4px;width:100%}
+  th,td{text-align:center;font-size:10px;padding:7px 5px;border-radius:7px}
+  th{color:var(--muted);font-weight:700;white-space:nowrap}
+  th:first-child,td:first-child{text-align:left;position:sticky;left:0;background:#18141e;z-index:1;min-width:165px}
+  td.cell{background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.035);cursor:pointer;transition:.15s}
+  td.cell.has{background:rgba(134,88,142,.15);border-color:rgba(134,88,142,.32)}
+  td.cell.has:hover{background:rgba(134,88,142,.30)}
+  .dotmark{width:8px;height:8px;border-radius:50%;margin:auto}
+  .internal-box{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+  .internal-route{font-size:11px;color:#ddd3e2;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.055);border-radius:10px;padding:8px 10px}
+
+  /* SVG */
+  .zone{fill:rgba(255,255,255,.018);stroke:rgba(255,255,255,.05);stroke-width:1}
+  .zone-label{fill:#82778b;font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase}
+  .route{fill:none;stroke-width:2;vector-effect:non-scaling-stroke;transition:opacity .16s ease,stroke-width .16s ease,filter .16s ease;pointer-events:stroke}
+  .route.overview{opacity:.18}
+  .route.dim{opacity:.025}
+  .route.hit{opacity:.98;stroke-width:3.3;filter:drop-shadow(0 0 5px rgba(255,255,255,.12))}
+  .route.hovered{opacity:1!important;stroke-width:4.2!important;filter:drop-shadow(0 0 7px rgba(255,255,255,.22))}
+  .node{cursor:pointer;transition:opacity .16s ease;outline:none}
+  .node .shape{stroke:rgba(255,255,255,.22);stroke-width:1.3;filter:drop-shadow(0 8px 14px rgba(0,0,0,.20));transition:.16s ease}
+  .node .label{font-family:"Lato","Avenir Next",Arial,sans-serif;font-size:13px;font-weight:800;letter-spacing:.02em;pointer-events:none}
+  .node .sublabel{font-family:"Lato","Avenir Next",Arial,sans-serif;font-size:8.5px;font-weight:700;letter-spacing:.05em;pointer-events:none}
+  .node:hover .shape{stroke:#fff;stroke-width:2;filter:drop-shadow(0 0 12px rgba(199,221,202,.22))}
+  .node.selected .shape{stroke:var(--cream);stroke-width:2.4;filter:drop-shadow(0 0 12px rgba(199,221,202,.33))}
+  .node.related .shape{stroke:rgba(199,221,202,.72);stroke-width:1.8}
+  .node.dim{opacity:.30}
+  .node.search-dim{opacity:.12}
+  .badge{font-family:Arial,sans-serif;font-size:8px;font-weight:800;fill:#fff;opacity:.7}
+  .tooltip{position:fixed;z-index:50;pointer-events:none;background:#0f0c12;border:1px solid rgba(255,255,255,.12);color:#fff;padding:8px 10px;border-radius:9px;font-size:11px;box-shadow:0 10px 30px rgba(0,0,0,.4);opacity:0;transform:translateY(4px);transition:.08s}
+  .tooltip.show{opacity:1;transform:none}
+  .kbd{display:inline-block;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);padding:1px 5px;border-radius:5px;font-size:9px;color:#c9bfd0}
+
+  @media (max-width:1100px){
+    .main{grid-template-columns:1fr}.inspector{display:none}.brand{min-width:210px}.search{display:none}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="glass">
+    <div class="brand">
+      <h1>NBA on NBC BUS AND MAIN MAPPING</h1>
+      <div class="sub">Interactive mix-bus overview • click any node to isolate</div>
+    </div>
+    <div class="controls">
+      <div class="control-group">
+        <button class="btn active" id="directBtn">Direct</button>
+        <button class="btn" id="traceBtn">Trace full path</button>
+      </div>
+      <div class="control-group">
+        <button class="btn active" id="diagramBtn">Diagram</button>
+        <button class="btn" id="matrixBtn">Matrix</button>
+      </div>
+      <div class="control-group">
+        <button class="btn" id="clearBtn">Clear</button>
+        <button class="btn primary" id="overviewBtn">All routes</button>
+      </div>
+      <input class="search" id="searchBox" placeholder="Find Group / Main / Bird…" />
+    </div>
+  </header>
+
+  <div class="main">
+    <section class="stage glass">
+      <div class="stage-toolbar" id="routeTypeToolbar">
+        <button class="chip on" data-kind="main">Main routes</button>
+        <button class="chip on" data-kind="internal">Internal groups</button>
+        <button class="chip on" data-kind="bird">Bird routes</button>
+      </div>
+      <div id="diagramView">
+        <svg id="routeSvg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid meet" aria-label="Interactive route diagram">
+          <defs>
+            <pattern id="dots" width="28" height="28" patternUnits="userSpaceOnUse"><circle cx="1.4" cy="1.4" r="1.4" fill="rgba(255,255,255,.035)"/></pattern>
+            <marker id="arrow" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L7,3.5 L0,7 Z" fill="context-stroke"/></marker>
+          </defs>
+          <rect x="0" y="0" width="1600" height="900" fill="url(#dots)"/>
+          <rect class="zone" x="58" y="70" rx="22" width="500" height="760"/>
+          <rect class="zone" x="595" y="70" rx="22" width="400" height="150"/>
+          <rect class="zone" x="1080" y="70" rx="22" width="465" height="760"/>
+          <text class="zone-label" x="85" y="103">GROUPS</text>
+          <text class="zone-label" x="622" y="103">BIRD FEEDS</text>
+          <text class="zone-label" x="1108" y="103">MAINS</text>
+          <g id="routesLayer"></g>
+          <g id="nodesLayer"></g>
+        </svg>
+      </div>
+      <div id="matrixView"></div>
+    </section>
+
+    <aside class="inspector glass">
+      <h2>ROUTE INSPECTOR</h2>
+      <div class="hint">Click one or more boxes to isolate their routes. <b>Trace full path</b> follows upstream/downstream contribution chains.</div>
+      <div class="stat-row">
+        <div class="stat"><div class="n" id="visibleRouteCount">0</div><div class="l">Visible Routes</div></div>
+        <div class="stat"><div class="n" id="selectedCount">0</div><div class="l">Selected Nodes</div></div>
+      </div>
+      <div class="section-title">Selection</div>
+      <div id="selectionList" class="selection-list"></div>
+      <div class="section-title">Routes in view</div>
+      <div id="routeList" class="route-list"></div>
+      <div class="section-title">Legend</div>
+      <div class="legend">
+        <span><i class="sw" style="background:#cfdcf0"></i> Group</span>
+        <span><i class="sw" style="background:#f0c6df"></i> Bird</span>
+        <span><i class="sw" style="background:#ed2c35"></i> Main</span>
+      </div>
+      <div class="hint" style="margin-top:14px">Tip: <span class="kbd">Esc</span> clears selection. Hover any route to identify it.</div>
+    </aside>
+  </div>
+</div>
+<div class="tooltip" id="tooltip"></div>
+
+<script>
+(() => {
+  const COLORS = {
+    m01:'#e72831', m02:'#f18b45', m03:'#24a99a', m04:'#b33bd0', m05:'#c6c0cb',
+    m06:'#9d8b68', m07:'#53c768', m08:'#f0ca28', m11:'#ff6f78', m12:'#ffffff',
+    bird:'#ff78ce', internalAir:'#278bd9', internalTape:'#1aa184'
+  };
+
+  const nodes = [
+    {id:'g01',type:'group',label:'GROUP 01',sub:'MICS',x:120,y:140,w:330,h:44},
+    {id:'g02',type:'group',label:'GROUP 02',sub:'REPS',x:120,y:195,w:330,h:44},
+    {id:'g03',type:'group',label:'GROUP 03',sub:'EFX TO AIR',x:120,y:250,w:330,h:44},
+    {id:'g04',type:'group',label:'GROUP 04',sub:'MUSIC / POP',x:120,y:305,w:330,h:44},
+    {id:'g05',type:'group',label:'GROUP 05',sub:'SFX',x:120,y:360,w:330,h:44},
+    {id:'g06',type:'group',label:'GROUP 06',sub:'EFX TO TAPE',x:120,y:415,w:330,h:44},
+    {id:'g08',type:'group',label:'GROUP 08',sub:'MISC',x:120,y:470,w:330,h:44},
+    {id:'g09',type:'group',label:'GROUP 09',sub:'CROWDS',x:120,y:525,w:330,h:44},
+    {id:'g10',type:'group',label:'GROUP 10',sub:'TALLY CAMS',x:120,y:580,w:330,h:44},
+    {id:'g11',type:'group',label:'GROUP 11',sub:'COURT EFX',x:120,y:635,w:330,h:44},
+    {id:'g12',type:'group',label:'GROUP 12',sub:'MUSIC CLEARED',x:120,y:690,w:330,h:44},
+    {id:'g13',type:'group',label:'GROUP 13',sub:'EVS ONLY',x:120,y:745,w:330,h:44},
+
+    {id:'annc',type:'bird',label:'ANNC BIRD',sub:'',x:650,y:112,w:280,h:38},
+    {id:'rep',type:'bird',label:'REP BIRD',sub:'',x:650,y:157,w:280,h:38},
+    {id:'evs',type:'bird',label:'EVS BIRD',sub:'',x:650,y:202,w:280,h:38},
+
+    {id:'m01',type:'main',label:'MAIN 01',sub:'TRUCK PGM',x:1160,y:125,w:300,h:50},
+    {id:'m02',type:'main',label:'MAIN 02',sub:'EFX ONLY',x:1160,y:195,w:300,h:50},
+    {id:'m03',type:'main',label:'MAIN 03',sub:'RE-AIR PGM XY',x:1160,y:265,w:300,h:50},
+    {id:'m04',type:'main',label:'MAIN 04',sub:'PGM - EFX',x:1160,y:335,w:300,h:50},
+    {id:'m05',type:'main',label:'MAIN 05',sub:'NBC CLEAN WITH POP',x:1160,y:405,w:300,h:50},
+    {id:'m06',type:'main',label:'MAIN 06',sub:'NBC CLEAN WITH FREEPLAY',x:1160,y:475,w:300,h:50},
+    {id:'m07',type:'main',label:'MAIN 07',sub:'HOUSE CLEAN',x:1160,y:545,w:300,h:50},
+    {id:'m08',type:'main',label:'MAIN 08',sub:'NBA DIRTY',x:1160,y:615,w:300,h:50},
+    {id:'m11',type:'main',label:'MAIN 11',sub:'NBC TX X/Y PROGRAM',x:1160,y:685,w:300,h:50},
+    {id:'m12',type:'main',label:'MAIN 12',sub:'DUSTY PROGRAM',x:1160,y:755,w:300,h:50}
+  ];
+
+  const nodeMap = Object.fromEntries(nodes.map(n=>[n.id,n]));
+  const edges = [];
+  const addMain = (main, sources) => sources.forEach(source => edges.push({id:`${source}-${main}`,source,target:main,kind:'main',color:COLORS[main]}));
+
+  addMain('m01',['g01','g02','g03','g04','g05','g08','g13']);
+  addMain('m02',['g09','g10','g11']);
+  addMain('m03',['g03','g05','g08','g12']);
+  addMain('m04',['g01','g02','g04','g08','g13']);
+  addMain('m05',['g01','g02','g03','g04','g08','g13']);
+  addMain('m06',['g01','g02','g03','g08','g12']);
+  addMain('m07',['g03','g04','g05','g08']);
+  addMain('m08',['g01','g02','g03','g05','g08','g12','g13']);
+  addMain('m11',['g03','g04','g05','g08']);
+  addMain('m12',['g03','g05','g08','g12']);
+
+  ['g09','g10','g11'].forEach(s=>edges.push({id:`${s}-g03`,source:s,target:'g03',kind:'internal',color:COLORS.internalAir}));
+  ['g09','g10','g11'].forEach(s=>edges.push({id:`${s}-g06`,source:s,target:'g06',kind:'internal',color:COLORS.internalTape}));
+
+  const birdSources = [['g01','annc'],['g02','rep'],['g13','evs']];
+  birdSources.forEach(([s,b])=>edges.push({id:`${s}-${b}`,source:s,target:b,kind:'bird',color:COLORS.bird,birdTap:true}));
+  ['annc','rep','evs'].forEach(b=>['m03','m07','m11','m12'].forEach(m=>edges.push({id:`${b}-${m}`,source:b,target:m,kind:'bird',color:COLORS.bird,birdMain:true})));
+
+  const selected = new Set();
+  const activeKinds = new Set(['main','internal','bird']);
+  let traceMode = false;
+  let viewMode = 'diagram';
+  let hoveredEdge = null;
+
+  const routesLayer = document.getElementById('routesLayer');
+  const nodesLayer = document.getElementById('nodesLayer');
+  const tooltip = document.getElementById('tooltip');
+
+  const centerY = n => n.y + n.h/2;
+  const rightX = n => n.x + n.w;
+  const leftX = n => n.x;
+
+  function mainPath(e){
+    const s=nodeMap[e.source], t=nodeMap[e.target];
+    const sy=centerY(s), ty=centerY(t), sx=rightX(s), tx=leftX(t);
+    const mainIndex=['m01','m02','m03','m04','m05','m06','m07','m08','m11','m12'].indexOf(t.id);
+    const lane=770 + mainIndex*22;
+    return `M ${sx} ${sy} C ${sx+115} ${sy}, ${lane-70} ${ty}, ${lane} ${ty} L ${tx-14} ${ty}`;
+  }
+
+  function internalPath(e){
+    const s=nodeMap[e.source], t=nodeMap[e.target];
+    const sy=centerY(s), ty=centerY(t);
+    const sx=leftX(s), tx=leftX(t);
+    const lane = e.target==='g03' ? 72 : 92;
+    return `M ${sx} ${sy} C ${lane} ${sy}, ${lane} ${ty}, ${tx-14} ${ty}`;
+  }
+
+  function birdTapPath(e){
+    const s=nodeMap[e.source], t=nodeMap[e.target];
+    const sy=centerY(s), ty=centerY(t);
+    const sx=leftX(s), tx=leftX(t);
+    const lane=85;
+    return `M ${sx} ${sy} C ${lane} ${sy}, ${lane} ${ty}, ${tx-14} ${ty}`;
+  }
+
+  function birdMainPath(e){
+    const s=nodeMap[e.source], t=nodeMap[e.target];
+    const sy=centerY(s), ty=centerY(t);
+    const sx=rightX(s), tx=rightX(t);
+    const joinX = e.source==='annc'?970:e.source==='rep'?990:1010;
+    const trunkY=92;
+    const farX=1500;
+    return `M ${sx} ${sy} H ${joinX} V ${trunkY} H ${farX} V ${ty} H ${tx+14}`;
+  }
+
+  function routePath(e){
+    if(e.kind==='main') return mainPath(e);
+    if(e.kind==='internal') return internalPath(e);
+    if(e.birdTap) return birdTapPath(e);
+    if(e.birdMain) return birdMainPath(e);
+    return '';
+  }
+
+  function makeSvg(tag, attrs={}){
+    const el=document.createElementNS('http://www.w3.org/2000/svg',tag);
+    Object.entries(attrs).forEach(([k,v])=>el.setAttribute(k,v));
+    return el;
+  }
+
+  function drawRoutes(){
+    edges.forEach(e=>{
+      const p=makeSvg('path',{d:routePath(e),stroke:e.color,'marker-end':'url(#arrow)','data-edge':e.id,class:'route overview'});
+      p.addEventListener('mouseenter',ev=>{ hoveredEdge=e.id; updateVisuals(); showTooltip(ev,e); });
+      p.addEventListener('mousemove',ev=>moveTooltip(ev));
+      p.addEventListener('mouseleave',()=>{ hoveredEdge=null; tooltip.classList.remove('show'); updateVisuals(); });
+      p.addEventListener('click',ev=>{
+        ev.stopPropagation();
+        selected.clear(); selected.add(e.source); selected.add(e.target); updateVisuals();
+      });
+      routesLayer.appendChild(p);
+    });
+  }
+
+  function mainShape(n){
+    const x=n.x,y=n.y,w=n.w,h=n.h;
+    const pts=`${x+18},${y} ${x+w-32},${y} ${x+w},${y+h/2} ${x+w-32},${y+h} ${x+18},${y+h} ${x},${y+h/2}`;
+    return makeSvg('polygon',{points:pts,class:'shape',fill:COLORS[n.id]||'#e72831'});
+  }
+
+  function rectShape(n){
+    const fill=n.type==='bird'?'#eebfdb':'#cfdcf0';
+    return makeSvg('rect',{x:n.x,y:n.y,width:n.w,height:n.h,rx:n.h/2,class:'shape',fill});
+  }
+
+  function drawNodes(){
+    nodes.forEach(n=>{
+      const g=makeSvg('g',{class:'node',tabindex:'0','data-node':n.id});
+      g.appendChild(n.type==='main'?mainShape(n):rectShape(n));
+      const label=makeSvg('text',{x:n.x+n.w/2,y:n.y+(n.sub?19:n.h/2+5),'text-anchor':'middle',class:'label',fill:n.type==='main'?(n.id==='m12'?'#17121a':'#fff'):'#17121a'});
+      label.textContent=n.label;
+      g.appendChild(label);
+      if(n.sub){
+        const sub=makeSvg('text',{x:n.x+n.w/2,y:n.y+34,'text-anchor':'middle',class:'sublabel',fill:n.type==='main'?(n.id==='m12'?'rgba(23,18,26,.88)':'rgba(255,255,255,.88)'):'#494052'});
+        sub.textContent=n.sub;
+        g.appendChild(sub);
+      }
+      g.addEventListener('click',ev=>{ev.stopPropagation(); toggleNode(n.id)});
+      g.addEventListener('keydown',ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();toggleNode(n.id)}});
+      g.addEventListener('mouseenter',()=>previewNode(n.id,true));
+      g.addEventListener('mouseleave',()=>previewNode(n.id,false));
+      nodesLayer.appendChild(g);
+    });
+  }
+
+  function toggleNode(id){
+    if(selected.has(id)) selected.delete(id); else selected.add(id);
+    updateVisuals();
+  }
+
+  let previewId=null;
+  function previewNode(id,on){ previewId=on?id:null; updateVisuals(); }
+
+  function edgeTouches(e,id){return e.source===id||e.target===id}
+
+  function traceEdgesFor(startId){
+    const found=new Set();
+    const visitedUp=new Set(),visitedDown=new Set();
+    const walkDown=id=>{
+      if(visitedDown.has(id)) return; visitedDown.add(id);
+      edges.filter(e=>activeKinds.has(e.kind)&&e.source===id).forEach(e=>{found.add(e.id); walkDown(e.target)});
+    };
+    const walkUp=id=>{
+      if(visitedUp.has(id)) return; visitedUp.add(id);
+      edges.filter(e=>activeKinds.has(e.kind)&&e.target===id).forEach(e=>{found.add(e.id); walkUp(e.source)});
+    };
+    const n=nodeMap[startId];
+    if(!n) return found;
+    if(n.type==='main') walkUp(startId);
+    else {walkUp(startId); walkDown(startId)}
+    return found;
+  }
+
+  function activeEdgeIds(){
+    const ids=new Set();
+    const basis=selected.size?[...selected]:(previewId?[previewId]:[]);
+    if(!basis.length) return ids;
+    basis.forEach(id=>{
+      if(traceMode){ traceEdgesFor(id).forEach(eid=>ids.add(eid)); }
+      else { edges.filter(e=>activeKinds.has(e.kind)&&edgeTouches(e,id)).forEach(e=>ids.add(e.id)); }
+    });
+    return ids;
+  }
+
+  function routeLabel(e){
+    const a=nodeMap[e.source],b=nodeMap[e.target];
+    const aName=a.sub?`${a.label} ${a.sub}`:a.label;
+    const bName=b.sub?`${b.label} ${b.sub}`:b.label;
+    return `${aName} → ${bName}`;
+  }
+
+  function updateVisuals(){
+    const focusIds=activeEdgeIds();
+    const hasFocus=(selected.size>0||previewId);
+    const connectedNodes=new Set();
+    edges.forEach(e=>{if(focusIds.has(e.id)){connectedNodes.add(e.source);connectedNodes.add(e.target)}});
+
+    document.querySelectorAll('.route').forEach(p=>{
+      const e=edges.find(x=>x.id===p.dataset.edge);
+      const enabled=activeKinds.has(e.kind);
+      p.style.display=enabled?'':'none';
+      p.classList.remove('overview','dim','hit','hovered');
+      if(!enabled) return;
+      if(hoveredEdge===e.id) p.classList.add('hovered');
+      else if(hasFocus) p.classList.add(focusIds.has(e.id)?'hit':'dim');
+      else p.classList.add('overview');
+    });
+
+    document.querySelectorAll('.node').forEach(g=>{
+      const id=g.dataset.node;
+      g.classList.toggle('selected',selected.has(id));
+      g.classList.toggle('related',hasFocus&&connectedNodes.has(id)&&!selected.has(id));
+      g.classList.toggle('dim',hasFocus&&!connectedNodes.has(id)&&!selected.has(id));
+    });
+    updateInspector(focusIds,hasFocus);
+  }
+
+  function updateInspector(focusIds,hasFocus){
+    const visible=edges.filter(e=>activeKinds.has(e.kind) && (!hasFocus||focusIds.has(e.id)));
+    document.getElementById('visibleRouteCount').textContent=visible.length;
+    document.getElementById('selectedCount').textContent=selected.size;
+
+    const sl=document.getElementById('selectionList'); sl.innerHTML='';
+    if(!selected.size){sl.innerHTML='<div class="empty">Nothing selected. Click a Group, Bird, or Main to isolate it.</div>'}
+    else [...selected].forEach(id=>{
+      const n=nodeMap[id],d=document.createElement('div'); d.className='pill';
+      d.innerHTML=`<span>${n.label}${n.sub?` · ${n.sub}`:''}</span><button title="Remove">×</button>`;
+      d.querySelector('button').onclick=()=>{selected.delete(id);updateVisuals()}; sl.appendChild(d);
+    });
+
+    const rl=document.getElementById('routeList'); rl.innerHTML='';
+    if(!visible.length){rl.innerHTML='<div class="empty">No routes match the current selection / filter.</div>'}
+    else visible.slice(0,80).forEach(e=>{
+      const d=document.createElement('div'); d.className='route-item';
+      d.innerHTML=`<i class="route-dot" style="background:${e.color};color:${e.color}"></i><div>${routeLabel(e)}</div>`;
+      rl.appendChild(d);
+    });
+  }
+
+  function showTooltip(ev,e){tooltip.textContent=routeLabel(e);moveTooltip(ev);tooltip.classList.add('show')}
+  function moveTooltip(ev){tooltip.style.left=(ev.clientX+14)+'px';tooltip.style.top=(ev.clientY+14)+'px'}
+
+  function clearSelection(){selected.clear();previewId=null;updateVisuals()}
+
+  function setTrace(on){
+    traceMode=on;
+    document.getElementById('directBtn').classList.toggle('active',!on);
+    document.getElementById('traceBtn').classList.toggle('active',on);
+    updateVisuals();
+  }
+
+  document.getElementById('directBtn').onclick=()=>setTrace(false);
+  document.getElementById('traceBtn').onclick=()=>setTrace(true);
+  document.getElementById('clearBtn').onclick=clearSelection;
+  document.getElementById('overviewBtn').onclick=clearSelection;
+  document.getElementById('routeSvg').addEventListener('click',clearSelection);
+
+  document.querySelectorAll('.chip').forEach(ch=>ch.onclick=()=>{
+    const k=ch.dataset.kind;
+    if(activeKinds.has(k)) activeKinds.delete(k); else activeKinds.add(k);
+    ch.classList.toggle('on',activeKinds.has(k));
+    updateVisuals();
+  });
+
+  function setView(v){
+    viewMode=v;
+    document.getElementById('diagramView').style.display=v==='diagram'?'block':'none';
+    document.getElementById('matrixView').style.display=v==='matrix'?'block':'none';
+    document.getElementById('diagramBtn').classList.toggle('active',v==='diagram');
+    document.getElementById('matrixBtn').classList.toggle('active',v==='matrix');
+  }
+  document.getElementById('diagramBtn').onclick=()=>setView('diagram');
+  document.getElementById('matrixBtn').onclick=()=>setView('matrix');
+
+  document.getElementById('searchBox').addEventListener('input',e=>{
+    const q=e.target.value.trim().toLowerCase();
+    document.querySelectorAll('.node').forEach(g=>{
+      const n=nodeMap[g.dataset.node],txt=`${n.label} ${n.sub}`.toLowerCase();
+      g.classList.toggle('search-dim',q&&!txt.includes(q));
+    });
+  });
+
+  document.addEventListener('keydown',e=>{if(e.key==='Escape') clearSelection()});
+
+  function buildMatrix(){
+    const mainIds=['m01','m02','m03','m04','m05','m06','m07','m08','m11','m12'];
+    const rowIds=['g01','g02','g03','g04','g05','g06','g08','g09','g10','g11','g12','g13','annc','rep','evs'];
+    const wrap=document.createElement('div');wrap.className='matrix-wrap';
+    const title=document.createElement('div');title.className='matrix-title';title.textContent='Direct Route Matrix';wrap.appendChild(title);
+    const tbl=document.createElement('table');
+    const head=document.createElement('tr'); head.innerHTML='<th>SOURCE</th>'+mainIds.map(id=>`<th>${nodeMap[id].label.replace('MAIN ','M')}</th>`).join(''); tbl.appendChild(head);
+    rowIds.forEach(rid=>{
+      const tr=document.createElement('tr');
+      const rn=nodeMap[rid]; tr.innerHTML=`<td>${rn.label}${rn.sub?` · ${rn.sub}`:''}</td>`;
+      mainIds.forEach(mid=>{
+        const edge=edges.find(e=>e.source===rid&&e.target===mid);
+        const td=document.createElement('td'); td.className='cell'+(edge?' has':'');
+        if(edge){td.innerHTML=`<div class="dotmark" style="background:${edge.color}"></div>`;td.title=routeLabel(edge);td.onclick=()=>{selected.clear();selected.add(rid);selected.add(mid);setView('diagram');updateVisuals()}}
+        tr.appendChild(td);
+      });
+      tbl.appendChild(tr);
+    });
+    wrap.appendChild(tbl);
+    const note=document.createElement('div');note.className='section-title';note.textContent='Internal group contributions';wrap.appendChild(note);
+    const ib=document.createElement('div');ib.className='internal-box';
+    edges.filter(e=>e.kind==='internal'||e.birdTap).forEach(e=>{const d=document.createElement('div');d.className='internal-route';d.textContent=routeLabel(e);ib.appendChild(d)});
+    wrap.appendChild(ib);
+    document.getElementById('matrixView').appendChild(wrap);
+  }
+
+  drawRoutes();
+  drawNodes();
+  buildMatrix();
+  updateVisuals();
+})();
+</script>
+</body>
+</html>
