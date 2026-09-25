@@ -218,7 +218,7 @@ popover:document.getElementById('popover'),popClose:document.getElementById('pop
 };
 const desktopEdit={matches:(()=>{const w=window.innerWidth||document.documentElement.clientWidth||0; return w>=701;})(), addEventListener:(type,fn)=>{ if(type==='change') window.addEventListener('resize',()=>fn({matches:(window.innerWidth||document.documentElement.clientWidth||0)>=701})); }};
 // Lightweight client-side edit protection. This password is intentionally stored in the static HTML.
-const EDIT_PASSWORD=atob('bWljcGxhbjIwMjY=');
+const EDIT_PASSWORD='isittheshoes?';
 
 // Shared-save configuration. The URL/key are safe to publish in browser code when Supabase RLS is
 // configured correctly. Never put a service_role key here.
