@@ -321,7 +321,7 @@ function init(){
 function requestEditMode(){
  if(!desktopEdit.matches)return;
  if(editorUnlocked){setEditMode(true);return}
- const entered=window.prompt('Enter editor password:');
+ const entered=window.prompt('BD Mic Plot Password:');
  if(entered===null)return;
  if(entered===EDIT_PASSWORD){
   editorUnlocked=true;
