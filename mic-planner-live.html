@@ -145,7 +145,7 @@ body{background:#0b0c12}
 .legend-item{width:96px;padding:6px;min-width:96px}
 .legend-text{font-size:7px}
 .legend-symbol{width:27px;height:24px}
-.popover{position:fixed;z-index:50;left:10px!important;right:10px;bottom:calc(82px + env(safe-area-inset-bottom,0px));top:auto!important;width:auto;max-height:34vh;overflow:auto}
+.popover{position:fixed;z-index:100;left:10px!important;right:10px;bottom:calc(82px + env(safe-area-inset-bottom,0px));top:auto!important;width:auto;max-height:34vh;overflow:auto;pointer-events:auto}
 @media (orientation:landscape) and (max-height:520px){
   .legendbar{min-height:64px;height:64px;max-height:64px}
   .legend-items{padding:5px 0}
@@ -156,6 +156,18 @@ body{background:#0b0c12}
   .legend-title{font-size:9px}
   .legend-item{width:88px;min-width:88px;padding:5px}
   .legend-text{font-size:6.8px}
+}
+/* Force the mobile viewer into a landscape canvas even when the phone is held portrait. */
+@media (max-width:700px) and (orientation:portrait){
+  .app{
+    position:absolute;
+    left:100%;
+    top:0;
+    width:100vh;
+    height:100vw;
+    transform:rotate(90deg);
+    transform-origin:top left;
+  }
 }
 </style>
 </head>
@@ -174,7 +186,14 @@ body{background:#0b0c12}
 
   <footer class="legendbar"><div class="legend-title"><div>MIC TYPE KEY<div class="legend-hint">Tap a type to isolate it</div></div></div><div class="legend-items" id="legend"></div></footer>
 </div>
-<div class="pop-type" id="popType"></div><div class="pop-model" id="popModel"></div><div class="pop-desc" id="popDesc"></div><div class="pop-meta" id="popMeta"></div></div>
+<div class="popover" id="popover" aria-live="polite">
+  <button class="pop-close" id="popClose" aria-label="Close">×</button>
+  <div class="pop-title" id="popTitle"></div>
+  <div class="pop-type" id="popType"></div>
+  <div class="pop-model" id="popModel"></div>
+  <div class="pop-desc" id="popDesc"></div>
+  <div class="pop-meta" id="popMeta"></div>
+</div>
 
 <script>
 (()=>{
