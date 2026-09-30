@@ -242,7 +242,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
   }
   .legendbar{padding-bottom:6px}
 }
-.load-status{position:absolute;left:50%;bottom:8px;transform:translateX(-50%);z-index:12;display:none;max-width:90%;background:rgba(40,16,20,.92);border:1px solid rgba(232,91,103,.6);color:#ffdfe2;border-radius:999px;padding:6px 12px;font-size:11px;font-weight:700;text-align:center}
+.load-status{position:absolute;left:50%;bottom:8px;transform:translateX(-50%);z-index:12;display:none;width:max-content;max-width:92%;line-height:1.35;background:rgba(40,16,20,.92);border:1px solid rgba(232,91,103,.6);color:#ffdfe2;border-radius:12px;padding:6px 12px;font-size:11px;font-weight:700;text-align:center;user-select:text;-webkit-user-select:text}
 .load-status.show{display:block}
 </style>
 </head>
@@ -393,6 +393,17 @@ function render(){
  renderLegend();
 }
 
+function loadErrorText(e){
+ const m=String(e&&e.message||e||'');
+ let why;
+ if(/HTTP 401|HTTP 403|JWT|permission|policy/i.test(m))why='Supabase refused access (check the read policy on mic_planner_layouts).';
+ else if(/HTTP 404|relation|does not exist/i.test(m))why='Supabase table mic_planner_layouts not found.';
+ else if(/No shared basketball layout/i.test(m))why='No saved layout with id "'+SHARED_CONFIG.layoutId+'" in Supabase yet.';
+ else if(/invalid basketball layout/i.test(m))why='The saved layout in Supabase is not in the expected format.';
+ else if(/Failed to fetch|Load failed|NetworkError|network/i.test(m))why='Network request blocked or offline.';
+ else why=m.slice(0,160);
+ return 'Couldn\'t load live mic layout: '+why+' Retrying…';
+}
 function setLoadStatus(msg){const el=document.getElementById('loadStatus');if(!el)return;el.textContent=msg;el.classList.toggle('show',!!msg)}
 async function initLive(){
  render();
@@ -403,7 +414,7 @@ async function initLive(){
    setLoadStatus('');
  }catch(e){
    console.error('Basketball Mic Planner live load failed:',e);
-   setLoadStatus('Couldn\'t load the live mic layout. Retrying…');
+   setLoadStatus(loadErrorText(e));
  }
  setInterval(async()=>{
    try{
@@ -414,6 +425,7 @@ async function initLive(){
      if(incoming!==current){state=remote.state;render();}
    }catch(e){
      console.error('Basketball Mic Planner live refresh failed:',e);
+     setLoadStatus(loadErrorText(e));
    }
  },1000);
 }
