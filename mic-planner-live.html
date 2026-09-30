@@ -371,7 +371,7 @@ function normalize(p,legacy=false){return {...defaultState,...p,version:8,mics:(
 
 async function fetchSharedState(){
  if(!sharedConfigured)throw new Error('Shared configuration is missing.');
- const url=`${SHARED_CONFIG.url}/rest/v1/mic_planner_layouts?id=eq.${encodeURIComponent(SHARED_CONFIG.layoutId)}&select=layout,updated_at&_=${Date.now()}`;
+ const url=`${SHARED_CONFIG.url}/rest/v1/mic_planner_layouts?id=eq.${encodeURIComponent(SHARED_CONFIG.layoutId)}&select=layout,updated_at`;
  const r=await fetch(url,{
    method:'GET',
    headers:{apikey:SHARED_CONFIG.publishableKey,Authorization:`Bearer ${SHARED_CONFIG.publishableKey}`,Accept:'application/json'},
