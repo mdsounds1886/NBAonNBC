@@ -119,6 +119,8 @@ button{color:inherit}
   .legendbar{min-height:72px;padding-left:8px}.legend-title{font-size:11px;padding-right:10px}.legend-item{width:105px;padding:6px}.legend-text{font-size:7.5px}
 }
 @media(max-width:700px){
+  .stage-wrap{inset:0;align-items:center;justify-content:center}
+  .stage-shell{width:min(100%, calc(100dvh * 2.0807));height:min(100%, calc(100vw / 2.0807));aspect-ratio:200 / 96.14}
   .sidepanel{display:none!important}
   .workspace.editing .stage-wrap{right:0}
   .top-right{display:none!important}
@@ -135,8 +137,8 @@ body{background:#0b0c12}
 .app{height:100dvh;display:grid;grid-template-rows:minmax(0,1fr) auto}
 .workspace{min-height:0;height:100%;position:relative;background:#0b0c12;overflow:hidden}
 .stage-wrap{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:0}
-.stage-shell{width:100%;height:100%;min-height:0;background:#111;overflow:hidden}
-.scene,.overlay{width:100%;height:100%;display:block}.scene{z-index:1;object-fit:contain}.overlay{z-index:2;pointer-events:auto}
+.stage-shell{width:min(100%, calc(100dvh * 2.0807));height:min(100%, calc(100vw / 2.0807));aspect-ratio:200 / 96.14;min-height:0;background:#111;overflow:hidden;position:relative}
+.scene,.overlay{position:absolute;inset:0;width:100%;height:100%;display:block}.scene{z-index:1;object-fit:fill}.overlay{z-index:2;pointer-events:auto}
 .legendbar{min-height:76px;height:76px;max-height:76px;padding:0 8px env(safe-area-inset-bottom,0px);overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch}
 .legend-title{padding:0 10px 0 2px;font-size:10px;flex:0 0 auto}
 .legend-hint{font-size:7px}
@@ -144,7 +146,7 @@ body{background:#0b0c12}
 .legend-item{width:96px;padding:6px;min-width:96px}
 .legend-text{font-size:7px}
 .legend-symbol{width:27px;height:24px}
-.popover{position:fixed;z-index:100;left:10px!important;right:10px;bottom:calc(82px + env(safe-area-inset-bottom,0px));top:auto!important;width:auto;max-height:34vh;overflow:auto;pointer-events:auto}
+.popover{position:fixed;z-index:100;left:auto!important;right:12px;bottom:calc(72px + env(safe-area-inset-bottom,0px));top:auto!important;width:min(300px,calc(100vw - 24px));max-height:70vh;overflow:auto;pointer-events:auto}
 @media (orientation:landscape) and (max-height:520px){
   .legendbar{min-height:64px;height:64px;max-height:64px}
   .legend-items{padding:5px 0}
@@ -423,8 +425,7 @@ function pointerDown(e){els.popover.classList.remove('open');const p=pointFromEv
 }
 function pointerMove(e){if(!drag)return;e.preventDefault();const p=pointFromEvent(e),m=state.mics.find(x=>x.id===drag.id);if(!m)return;if(drag.kind==='aim'){m.tx=p.x;m.ty=p.y}else{const dx=p.x-m.x,dy=p.y-m.y;m.x=p.x;m.y=p.y;m.tx=clamp(m.tx+dx,0,W);m.ty=clamp(m.ty+dy,0,H)}renderOverlay();renderEditor()}
 function showPopover(id,cx,cy){const m=state.mics.find(x=>x.id===id);if(!m)return;const t=typeDef(m.type);els.popTitle.textContent=`Mic ${m.number||''}`;els.popType.textContent=t.name;els.popModel.textContent=m.model?`Model: ${m.model}`:'';els.popDesc.textContent=m.description||'No description entered.';els.popMeta.textContent=m.pointedAt?`Pointed at: ${m.pointedAt}`:'';els.popover.classList.add('open');
- const forcedPortrait=window.matchMedia('(max-width:700px) and (orientation:portrait)').matches;
- if(forcedPortrait){els.popover.style.left='';els.popover.style.top='';return;}
+ if(window.innerWidth<=700){els.popover.style.left='';els.popover.style.top='';return;}
  const w=300,h=180;els.popover.style.left=clamp(cx+12,10,innerWidth-w-10)+'px';els.popover.style.top=clamp(cy-30,10,innerHeight-h-10)+'px'}
 function exportJSON(){const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='basketball-mic-layout.json';document.body.appendChild(a);a.click();const u=a.href;a.remove();setTimeout(()=>URL.revokeObjectURL(u),500)}
 async function importJSON(e){const f=e.target.files?.[0];if(!f)return;try{const p=JSON.parse(await f.text());if(!p||!Array.isArray(p.mics))throw new Error('invalid');state=normalize(p,Number(p.version||0)<6);selectedId=null;saveState();render()}catch(err){alert('That file is not a valid Basketball Mic Planner layout.')}e.target.value=''}
