@@ -229,91 +229,59 @@ const LOCAL_KEY='basketballMicPlanner.v8';
 let editorUnlocked=sessionStorage.getItem('basketballMicPlanner.editorUnlocked')==='1';
 let editMode=false,placing=false,selectedId=null,drag=null,filterType=null;
 const defaultState={version:8,title:'BASKETBALL MIC PLANNER',mics:[]};
-let state=loadLocalState();
+let state=structuredClone(defaultState);
 
-function loadLocalState(){
- try{const r=localStorage.getItem(LOCAL_KEY);if(r){const p=JSON.parse(r);if(p&&Array.isArray(p.mics))return normalize(p)}}catch(e){}
- try{const r=localStorage.getItem('basketballMicPlanner.v6');if(r){const p=JSON.parse(r);if(p&&Array.isArray(p.mics))return normalize(p)}}catch(e){}
- try{const r=localStorage.getItem('basketballMicPlanner.v5');if(r){const p=JSON.parse(r);if(p&&Array.isArray(p.mics))return normalize(p,true)}}catch(e){}
- return structuredClone(defaultState)
-}
-function normalize(p,legacy=false){return {...defaultState,...p,version:8,mics:(p.mics||[]).map((m,i)=>{
- const oldH=Number(m.height||0),oldTH=Number(m.targetHeight||0),rawY=Number(m.y??m.baseY??70),rawTY=Number(m.ty??70);
- return {id:m.id||uid(),number:String(m.number??m.shortCode??(i+1)),type:m.type||TYPES[0].name,model:m.model||'',description:m.description||'',pointedAt:m.pointedAt||'',x:Number(m.x??m.baseX??100),y:legacy?rawY-oldH*legacyHeightScale(rawY):rawY,tx:Number(m.tx??110),ty:legacy?rawTY-oldTH*legacyHeightScale(rawTY):rawTY};
- })}
-}
-function setSyncStatus(text,mode=''){if(!els.syncStatus)return;els.syncStatus.textContent=text;els.syncStatus.className='sync-status'+(mode?' '+mode:'')}
+function normalize(p){return {...defaultState,...p,version:8,mics:(p.mics||[]).map((m,i)=>({
+ id:m.id||uid(),number:String(m.number??m.shortCode??(i+1)),type:m.type||TYPES[0].name,
+ model:m.model||'',description:m.description||'',pointedAt:m.pointedAt||'',
+ x:Number(m.x??m.baseX??100),y:Number(m.y??m.baseY??70),tx:Number(m.tx??110),ty:Number(m.ty??70)
+ }))}}
+
 async function fetchSharedState(){
- if(!sharedConfigured)return null;
- try{
-  setSyncStatus('Loading shared…');
-  const url=`${SHARED_CONFIG.url}/rest/v1/mic_planner_layouts?id=eq.${encodeURIComponent(SHARED_CONFIG.layoutId)}&select=layout,updated_at`;
-  const r=await fetch(url,{headers:{apikey:SHARED_CONFIG.publishableKey,Authorization:`Bearer ${SHARED_CONFIG.publishableKey}`} ,cache:'no-store'});
-  if(!r.ok)throw new Error(`HTTP ${r.status}`);
-  const rows=await r.json();
-  const layout=rows?.[0]?.layout;
-  if(layout&&Array.isArray(layout.mics)){
-   const normalized=normalize(layout);
-   localStorage.setItem(LOCAL_KEY,JSON.stringify(normalized));
-   const stamp=rows?.[0]?.updated_at?new Date(rows[0].updated_at).toLocaleString([], {month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'';
-   setSyncStatus(stamp?`Shared · ${stamp}`:'Shared','shared');
-   return normalized;
-  }
-  setSyncStatus('Shared · empty','shared');
- }catch(e){
-  setSyncStatus('Offline · local copy','warn');
+ if(!sharedConfigured)throw new Error('Shared configuration is missing.');
+ const url=`${SHARED_CONFIG.url}/rest/v1/mic_planner_layouts?id=eq.${encodeURIComponent(SHARED_CONFIG.layoutId)}&select=layout,updated_at&_=${Date.now()}`;
+ const r=await fetch(url,{
+   method:'GET',
+   headers:{apikey:SHARED_CONFIG.publishableKey,Authorization:`Bearer ${SHARED_CONFIG.publishableKey}`,Accept:'application/json'},
+   cache:'no-store'
+ });
+ if(!r.ok){
+   const msg=await r.text().catch(()=> '');
+   throw new Error(`Supabase HTTP ${r.status}${msg?`: ${msg.slice(0,220)}`:''}`);
  }
- return null;
+ const rows=await r.json();
+ if(!Array.isArray(rows)||!rows.length)throw new Error('No shared basketball layout was found in Supabase.');
+ const layout=rows[0]?.layout;
+ if(!layout||!Array.isArray(layout.mics))throw new Error('Supabase returned an invalid basketball layout.');
+ return {state:normalize(layout),updatedAt:rows[0]?.updated_at||null};
 }
-async function publishSharedState(){
- if(!sharedConfigured)return false;
- try{
-  setSyncStatus('Publishing…');
-  const r=await fetch(`${SHARED_CONFIG.url}/rest/v1/rpc/save_mic_planner_layout`,{
-   method:'POST',
-   headers:{apikey:SHARED_CONFIG.publishableKey,Authorization:`Bearer ${SHARED_CONFIG.publishableKey}`,'Content-Type':'application/json',Prefer:'return=representation'},
-   body:JSON.stringify({p_layout:state,p_token:SHARED_CONFIG.writeToken})
-  });
-  if(!r.ok){const msg=await r.text();throw new Error(msg||`HTTP ${r.status}`)}
-  localStorage.setItem(LOCAL_KEY,JSON.stringify(state));
-  setSyncStatus(`Shared · ${new Date().toLocaleString([], {month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}`,'shared');
-  return true;
- }catch(e){
-  setSyncStatus('Offline · local copy','warn');
-  return false;
- }
-}
-async function saveState(){
- localStorage.setItem(LOCAL_KEY,JSON.stringify(state));
- if(sharedConfigured){
-  const ok=await publishSharedState();
-  flash(els.saveBtn,ok?'Published':'Saved locally');
- }else{
-  setSyncStatus('Local only','warn');
-  flash(els.saveBtn,'Saved locally');
- }
-}
-function flash(btn,text){const old=btn.innerHTML;btn.textContent=text;btn.disabled=true;setTimeout(()=>{btn.innerHTML=old;btn.disabled=false},1000)}
 
-function init(){
- if(sharedConfigured)setSyncStatus('Loading shared…');else setSyncStatus('Local only','warn');
- TYPES.forEach(t=>{const o=document.createElement('option');o.value=t.name;o.textContent=t.name;els.micType.appendChild(o)});
+function render(){
+ renderOverlay();
  renderLegend();
- els.editControls.style.display=desktopEdit.matches?'flex':'none';
- els.editSwitch.addEventListener('click',()=>{if(editMode)setEditMode(false);else requestEditMode()});els.editSwitch.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();if(editMode)setEditMode(false);else requestEditMode()}});
- els.selectBtn.addEventListener('click',()=>{placing=false;els.placeToast.classList.remove('show');els.addBtn.classList.remove('active')});
- els.addBtn.addEventListener('click',()=>{if(!editMode)return;placing=!placing;els.addBtn.classList.toggle('active',placing);els.placeToast.classList.toggle('show',placing)});
- els.deleteTopBtn.addEventListener('click',deleteSelected);els.deleteBtn.addEventListener('click',deleteSelected);els.duplicateBtn.addEventListener('click',duplicateSelected);
- els.saveBtn.addEventListener('click',saveState);els.loadBtn.addEventListener('click',()=>els.loadInput.click());els.loadInput.addEventListener('change',importJSON);els.exportBtn.addEventListener('click',exportJSON);
- els.panelClose.addEventListener('click',()=>{els.sidepanel.classList.remove('open');document.querySelector('.workspace').classList.remove('editing')});
- [els.micNumber,els.micType,els.micModel,els.micDescription,els.pointedAt].forEach(el=>el.addEventListener('input',syncEditor));
- els.overlay.addEventListener('pointerdown',pointerDown);window.addEventListener('pointermove',pointerMove,{passive:false});window.addEventListener('pointerup',()=>drag=null);
- els.popClose.addEventListener('click',()=>els.popover.classList.remove('open'));
- desktopEdit.addEventListener('change',()=>{if(!desktopEdit.matches&&editMode)setEditMode(false);els.editControls.style.display=desktopEdit.matches?'flex':'none'});
- render();
- fetchSharedState().then(remote=>{if(remote){state=remote;selectedId=null;render()}else if(!sharedConfigured)render()});
- setInterval(async()=>{const remote=await fetchSharedState();if(remote){state=remote;selectedId=null;render()}},2000);
 }
+
+async function initLive(){
+ render();
+ try{
+   const remote=await fetchSharedState();
+   state=remote.state;
+   render();
+ }catch(e){
+   console.error('Basketball Mic Planner live load failed:',e);
+ }
+ setInterval(async()=>{
+   try{
+     const remote=await fetchSharedState();
+     const incoming=JSON.stringify(remote.state);
+     const current=JSON.stringify(state);
+     if(incoming!==current){state=remote.state;render();}
+   }catch(e){
+     console.error('Basketball Mic Planner live refresh failed:',e);
+   }
+ },1000);
+}
+
 function requestEditMode(){
  if(!desktopEdit.matches)return;
  if(editorUnlocked){setEditMode(true);return}
@@ -328,8 +296,6 @@ function requestEditMode(){
  }
 }
 function setEditMode(on){if(on&&(!desktopEdit.matches||!editorUnlocked))return;editMode=on;placing=false;els.editSwitch.classList.toggle('on',on);els.editSwitch.setAttribute('aria-checked',String(on));els.sidepanel.classList.toggle('open',on);document.querySelector('.workspace').classList.toggle('editing',on);[els.addBtn,els.deleteTopBtn,els.saveBtn,els.loadBtn].forEach(b=>b.style.display=on?'inline-flex':'none');els.placeToast.classList.remove('show');els.addBtn.classList.remove('active');if(!on)selectedId=null;render()}
-function render(){renderOverlay();renderEditor();renderList();els.deleteTopBtn.disabled=!selectedId}
-
 function renderVenueFixtures(){
  const scorer=svg('g',{class:'venue-fixture'});
  scorer.innerHTML='<rect class="venue-box" x="70" y="13.2" width="60" height="7.6" rx="2.4"></rect><text class="venue-text" x="100" y="17.25">SCORER\'S TABLE</text>';
@@ -375,7 +341,7 @@ function pointerMove(e){if(!drag)return;e.preventDefault();const p=pointFromEven
 function showPopover(id,cx,cy){const m=state.mics.find(x=>x.id===id);if(!m)return;const t=typeDef(m.type);els.popTitle.textContent=`Mic ${m.number||''}`;els.popType.textContent=t.name;els.popModel.textContent=m.model?`Model: ${m.model}`:'';els.popDesc.textContent=m.description||'No description entered.';els.popMeta.textContent=m.pointedAt?`Pointed at: ${m.pointedAt}`:'';els.popover.classList.add('open');const w=300,h=180;els.popover.style.left=clamp(cx+12,10,innerWidth-w-10)+'px';els.popover.style.top=clamp(cy-30,10,innerHeight-h-10)+'px'}
 function exportJSON(){const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='basketball-mic-layout.json';document.body.appendChild(a);a.click();const u=a.href;a.remove();setTimeout(()=>URL.revokeObjectURL(u),500)}
 async function importJSON(e){const f=e.target.files?.[0];if(!f)return;try{const p=JSON.parse(await f.text());if(!p||!Array.isArray(p.mics))throw new Error('invalid');state=normalize(p,Number(p.version||0)<6);selectedId=null;saveState();render()}catch(err){alert('That file is not a valid Basketball Mic Planner layout.')}e.target.value=''}
-init();
+initLive();
 })();
 </script>
 </body>
