@@ -229,13 +229,49 @@ const LOCAL_KEY='basketballMicPlanner.v8';
 let editorUnlocked=sessionStorage.getItem('basketballMicPlanner.editorUnlocked')==='1';
 let editMode=false,placing=false,selectedId=null,drag=null,filterType=null;
 const defaultState={version:8,title:'BASKETBALL MIC PLANNER',mics:[]};
-let state=structuredClone(defaultState);
 
-function normalize(p){return {...defaultState,...p,version:8,mics:(p.mics||[]).map((m,i)=>({
- id:m.id||uid(),number:String(m.number??m.shortCode??(i+1)),type:m.type||TYPES[0].name,
- model:m.model||'',description:m.description||'',pointedAt:m.pointedAt||'',
- x:Number(m.x??m.baseX??100),y:Number(m.y??m.baseY??70),tx:Number(m.tx??110),ty:Number(m.ty??70)
- }))}}
+function loadLocalState(){
+ try{
+  const r=localStorage.getItem(LOCAL_KEY);
+  if(r){
+   const p=JSON.parse(r);
+   if(p&&Array.isArray(p.mics))return normalize(p);
+  }
+ }catch(e){}
+ try{
+  const r=localStorage.getItem('basketballMicPlanner.v6');
+  if(r){
+   const p=JSON.parse(r);
+   if(p&&Array.isArray(p.mics))return normalize(p);
+  }
+ }catch(e){}
+ try{
+  const r=localStorage.getItem('basketballMicPlanner.v5');
+  if(r){
+   const p=JSON.parse(r);
+   if(p&&Array.isArray(p.mics))return normalize(p,true);
+  }
+ }catch(e){}
+ return structuredClone(defaultState);
+}
+
+let state=loadLocalState();
+
+function normalize(p,legacy=false){return {...defaultState,...p,version:8,mics:(p.mics||[]).map((m,i)=>{
+ const oldH=Number(m.height||0),oldTH=Number(m.targetHeight||0),rawY=Number(m.y??m.baseY??70),rawTY=Number(m.ty??70);
+ return {
+  id:m.id||uid(),
+  number:String(m.number??m.shortCode??(i+1)),
+  type:m.type||TYPES[0].name,
+  model:m.model||'',
+  description:m.description||'',
+  pointedAt:m.pointedAt||'',
+  x:Number(m.x??m.baseX??100),
+  y:legacy?rawY-oldH*legacyHeightScale(rawY):rawY,
+  tx:Number(m.tx??110),
+  ty:legacy?rawTY-oldTH*legacyHeightScale(rawTY):rawTY
+ };
+})}}
 
 async function fetchSharedState(){
  if(!sharedConfigured)throw new Error('Shared configuration is missing.');
