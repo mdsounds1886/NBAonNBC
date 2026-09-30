@@ -187,6 +187,61 @@ body{background:#0b0c12}
     transform-origin:top left;
   }
 }
+
+/* ---------- MOBILE FIXES (v2) ---------- */
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+.app{position:relative}
+/* Keep the court image and the SVG overlay at the exact same size and position.
+   Both letterbox identically (contain + meet), so markers always line up with the court. */
+.stage-wrap{container-type:size}
+.stage-shell{width:100%;height:100%;aspect-ratio:auto;background:transparent}
+.scene{object-fit:contain}
+@supports (width:1cqw){
+  .stage-shell{width:min(100cqw, calc(100cqh * 2.0803));height:min(100cqh, calc(100cqw / 2.0803))}
+}
+.legend-item{-webkit-tap-highlight-color:transparent}
+.legend-item:hover{transform:none}
+@media (hover:hover){.legend-item:hover{transform:translateY(-1px)}}
+.pop-close{width:36px;height:36px;right:4px;top:4px;display:grid;place-items:center;border-radius:8px}
+
+/* Phones (portrait gets rotated to landscape below; real landscape phones are short) */
+@media (max-width:700px), (max-height:520px){
+  .legendbar{height:auto;min-height:0;max-height:none;overflow:hidden;padding:6px 8px;gap:8px;align-items:center}
+  .legend-title{width:64px;padding:0;font-size:10px;line-height:1.15;white-space:normal;flex:0 0 64px}
+  .legend-hint{font-size:8px;white-space:normal;font-weight:600;margin-top:2px}
+  .legend-items{flex:1 1 auto;min-width:0;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:4px;padding:0}
+  .legend-item{width:auto;min-width:0;height:36px;padding:3px 5px;gap:4px;border-radius:7px}
+  .legend-symbol{width:30px;height:24px}
+  .legend-text{font-size:8.5px;line-height:1.12;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+  .popover{
+    position:absolute!important;z-index:1000!important;
+    left:50%!important;top:45%!important;right:auto!important;bottom:auto!important;
+    transform:translate(-50%,-50%);
+    width:min(360px,80%);max-width:360px;max-height:70%;overflow:auto;padding:12px 14px
+  }
+  .pop-title{font-size:15px}
+  .pop-type{font-size:11px}
+  .pop-model,.pop-meta{font-size:11px}
+  .pop-desc{font-size:12px;margin-top:6px}
+}
+/* Real landscape phone: stay clear of the notch / rounded corners */
+@media (orientation:landscape) and (max-height:520px){
+  .app{height:100%;height:var(--vp-h,100dvh);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
+  .legendbar{padding-bottom:calc(6px + env(safe-area-inset-bottom,0px))}
+}
+/* Portrait phone: rotate the whole viewer into a landscape canvas.
+   Uses the real visible viewport (set from JS) so the browser toolbars don't cut it off. */
+@media (max-width:700px) and (orientation:portrait){
+  .app{
+    position:absolute;left:100%;top:0;overflow:visible;
+    width:100vh;width:100dvh;width:var(--vp-h,100dvh);
+    height:100vw;height:var(--vp-w,100vw);
+    transform:rotate(90deg);transform-origin:top left;
+    /* after rotation: app-left = phone top (notch), app-right = phone bottom (home bar) */
+    padding-left:env(safe-area-inset-top,0px);padding-right:env(safe-area-inset-bottom,0px)
+  }
+  .legendbar{padding-bottom:6px}
+}
 </style>
 </head>
 <body>
@@ -203,7 +258,6 @@ body{background:#0b0c12}
 </main>
 
   <footer class="legendbar"><div class="legend-title"><div>MIC TYPE KEY<div class="legend-hint">Tap a type to isolate it</div></div></div><div class="legend-items" id="legend"></div></footer>
-</div>
 <div class="popover" id="popover" aria-live="polite">
   <button class="pop-close" id="popClose" aria-label="Close">×</button>
   <div class="pop-title" id="popTitle"></div>
@@ -211,6 +265,8 @@ body{background:#0b0c12}
   <div class="pop-model" id="popModel"></div>
   <div class="pop-desc" id="popDesc"></div>
   <div class="pop-meta" id="popMeta"></div>
+</div>
+
 </div>
 
 <script>
@@ -429,6 +485,15 @@ function showPopover(id,cx,cy){const m=state.mics.find(x=>x.id===id);if(!m)retur
  const w=300,h=180;els.popover.style.left=clamp(cx+12,10,innerWidth-w-10)+'px';els.popover.style.top=clamp(cy-30,10,innerHeight-h-10)+'px'}
 function exportJSON(){const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='basketball-mic-layout.json';document.body.appendChild(a);a.click();const u=a.href;a.remove();setTimeout(()=>URL.revokeObjectURL(u),500)}
 async function importJSON(e){const f=e.target.files?.[0];if(!f)return;try{const p=JSON.parse(await f.text());if(!p||!Array.isArray(p.mics))throw new Error('invalid');state=normalize(p,Number(p.version||0)<6);selectedId=null;saveState();render()}catch(err){alert('That file is not a valid Basketball Mic Planner layout.')}e.target.value=''}
+// Mobile helpers: true visible viewport size, and ways to dismiss the detail card.
+function setViewportVars(){const r=document.documentElement.style;r.setProperty('--vp-w',window.innerWidth+'px');r.setProperty('--vp-h',window.innerHeight+'px')}
+setViewportVars();
+window.addEventListener('resize',setViewportVars);
+window.addEventListener('orientationchange',()=>setTimeout(setViewportVars,250));
+const closePopover=()=>els.popover.classList.remove('open');
+els.popClose.addEventListener('click',e=>{e.stopPropagation();closePopover()});
+els.overlay.addEventListener('click',e=>{if(!e.target.closest('.mic-marker'))closePopover()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closePopover()});
 initLive();
 })();
 </script>
