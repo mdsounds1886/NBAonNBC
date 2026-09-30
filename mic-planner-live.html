@@ -151,6 +151,21 @@ body{background:#0b0c12}
   .legend-items{padding:5px 0}
   .legend-item{height:54px}
 }
+@media (max-width:700px) and (orientation:portrait){
+  /* The entire app is rotated into a landscape canvas. Keep the detail card inside that
+     rotated coordinate system so it remains landscape instead of inheriting portrait viewport math. */
+  .popover{
+    position:absolute!important;
+    left:50%!important;
+    right:auto!important;
+    top:50%!important;
+    bottom:auto!important;
+    width:min(390px,78%);
+    max-width:390px;
+    max-height:72%;
+    transform:translate(-50%,-50%);
+  }
+}
 @media (max-width:420px){
   .legendbar{min-height:70px;height:70px;max-height:70px}
   .legend-title{font-size:9px}
@@ -406,7 +421,10 @@ function pointerDown(e){els.popover.classList.remove('open');const p=pointFromEv
  if(editMode&&placing){const n=String(state.mics.length+1),t=TYPES[0];const m={id:uid(),number:n,type:t.name,model:'',description:'',pointedAt:'',x:p.x,y:p.y,tx:clamp(p.x+(p.x<W/2?18:-18),0,W),ty:p.y};state.mics.push(m);selectedId=m.id;placing=false;els.addBtn.classList.remove('active');els.placeToast.classList.remove('show');els.sidepanel.classList.add('open');document.querySelector('.workspace').classList.add('editing');render();e.preventDefault()}
 }
 function pointerMove(e){if(!drag)return;e.preventDefault();const p=pointFromEvent(e),m=state.mics.find(x=>x.id===drag.id);if(!m)return;if(drag.kind==='aim'){m.tx=p.x;m.ty=p.y}else{const dx=p.x-m.x,dy=p.y-m.y;m.x=p.x;m.y=p.y;m.tx=clamp(m.tx+dx,0,W);m.ty=clamp(m.ty+dy,0,H)}renderOverlay();renderEditor()}
-function showPopover(id,cx,cy){const m=state.mics.find(x=>x.id===id);if(!m)return;const t=typeDef(m.type);els.popTitle.textContent=`Mic ${m.number||''}`;els.popType.textContent=t.name;els.popModel.textContent=m.model?`Model: ${m.model}`:'';els.popDesc.textContent=m.description||'No description entered.';els.popMeta.textContent=m.pointedAt?`Pointed at: ${m.pointedAt}`:'';els.popover.classList.add('open');const w=300,h=180;els.popover.style.left=clamp(cx+12,10,innerWidth-w-10)+'px';els.popover.style.top=clamp(cy-30,10,innerHeight-h-10)+'px'}
+function showPopover(id,cx,cy){const m=state.mics.find(x=>x.id===id);if(!m)return;const t=typeDef(m.type);els.popTitle.textContent=`Mic ${m.number||''}`;els.popType.textContent=t.name;els.popModel.textContent=m.model?`Model: ${m.model}`:'';els.popDesc.textContent=m.description||'No description entered.';els.popMeta.textContent=m.pointedAt?`Pointed at: ${m.pointedAt}`:'';els.popover.classList.add('open');
+ const forcedPortrait=window.matchMedia('(max-width:700px) and (orientation:portrait)').matches;
+ if(forcedPortrait){els.popover.style.left='';els.popover.style.top='';return;}
+ const w=300,h=180;els.popover.style.left=clamp(cx+12,10,innerWidth-w-10)+'px';els.popover.style.top=clamp(cy-30,10,innerHeight-h-10)+'px'}
 function exportJSON(){const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='basketball-mic-layout.json';document.body.appendChild(a);a.click();const u=a.href;a.remove();setTimeout(()=>URL.revokeObjectURL(u),500)}
 async function importJSON(e){const f=e.target.files?.[0];if(!f)return;try{const p=JSON.parse(await f.text());if(!p||!Array.isArray(p.mics))throw new Error('invalid');state=normalize(p,Number(p.version||0)<6);selectedId=null;saveState();render()}catch(err){alert('That file is not a valid Basketball Mic Planner layout.')}e.target.value=''}
 initLive();
